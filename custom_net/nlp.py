@@ -15,29 +15,30 @@ from kobert.pytorch_kobert import get_pytorch_kobert_model
 from transformers import AdamW
 from transformers.optimization import get_cosine_schedule_with_warmup
 
+from sklearn.preprocessing import LabelEncoder
+from sklearn.model_selection import train_test_split
 
+# data path
 train = pd.read_csv('./train.csv')
 val = pd.read_csv('./val.csv')
 test = pd.read_csv('./test.csv')
 
+
 train = pd.concat([train,val])
-test_label =  [0 for i in range(len(test))]
+test_label = [0 for i in range(len(test))]
 test['label'] = test_label
 
 bertmodel, vocab = get_pytorch_kobert_model()
 
-from sklearn.preprocessing import LabelEncoder
+
 encoder = LabelEncoder()
 encoder.fit(train['class'])
 train['class'] = encoder.transform(train['class'])
 test['class'] = encoder.transform(test['class'])
-train.head()
 
 mapping = dict(zip(range(len(encoder.classes_)), encoder.classes_))
-mapping
 
-lst=[list(train.iloc[i]) for i in range(len(train))]
-print(lst[:10])
+lst = [list(train.iloc[i]) for i in range(len(train))]
 
 tokenizer = get_tokenizer()
 tok = nlp.data.BERTSPTokenizer(tokenizer, vocab, lower=False)
@@ -66,14 +67,12 @@ max_grad_norm = 1
 log_interval = 100
 learning_rate = 5e-5
 
-from sklearn.model_selection import train_test_split
-train, valid = train_test_split(lst, test_size=0.2, random_state=42)
+train, valid = train_test_split(lst, test_size=0.2, random_state=2022)
 print("train shape is:", len(train))
 print("valid shape is:", len(valid))
 
 data_train = BERTDataset(train, 1, 2, tok, max_len, True, False)
 data_valid = BERTDataset(valid, 1, 2, tok, max_len, True, False)
-data_train[0]
 
 train_dataloader = torch.utils.data.DataLoader(data_train, batch_size=batch_size, num_workers=5)
 valid_dataloader = torch.utils.data.DataLoader(data_valid, batch_size=batch_size, num_workers=5)
@@ -153,7 +152,7 @@ for e in range(num_epochs):
             print(f'Iteration %3.d | Train Loss  %.4f | Classifier Accuracy %2.2f' % (batch_id+1, loss.data.cpu().numpy(), train_acc / (batch_id+1)))
     print("epoch {} train acc {}".format(e+1, train_acc / (batch_id+1)))
 
-    model.eval() # 평가 모드로 변경
+    model.eval()
 
     for batch_id, (token_ids, valid_length, segment_ids, label) in enumerate(tqdm(valid_dataloader)):
         token_ids = token_ids.long().cuda()
@@ -164,39 +163,39 @@ for e in range(num_epochs):
         test_acc += calc_accuracy(out, label)
     print("epoch {} valid acc {}".format(e+1, test_acc / (batch_id+1)))
 
-
+# save trained model
 torch.save(model, './model.pt')
 
-model = torch.load('./model.pt')
-t = test.drop('class', axis=1)
-
-lst=[list(test.iloc[i]) for i in range(len(test))]
-data_test = BERTDataset(lst, 1, 2, tok, 512, True, False)
-test_dataloader = torch.utils.data.DataLoader(data_test, batch_size=4, num_workers=5)
-
-predictions =[]
-with torch.no_grad():
-    for batch_id, (token_ids, valid_length, segment_ids, label) in enumerate(tqdm(test_dataloader)):
-        token_ids = token_ids.long().cuda()
-        segment_ids = segment_ids.long().cuda()
-        valid_length = valid_length
-        print(token_ids, segment_ids)
-        label = label.long().cuda()
-        out = model(token_ids, valid_length, segment_ids)
-        _, max_indices = torch.max(out, 1)
-
-        predictions.extend(max_indices.squeeze(0).detach().cpu().numpy())
-
-
-print(predictions)
-
-test['label'] = predictions
-
-test[['class', 'label']]
-
-num =0
-for i in range(len(test)):
-    if test.iloc[i]['class'] == test.iloc[i]['label']:
-        num += 1
-
-num/len(test)
+# load pretrained(custom) model
+# model = torch.load('./model.pt')
+# t = test.drop('class', axis=1)
+#
+# lst = [list(test.iloc[i]) for i in range(len(test))]
+# data_test = BERTDataset(lst, 1, 2, tok, 512, True, False)
+# test_dataloader = torch.utils.data.DataLoader(data_test, batch_size=4, num_workers=5)
+#
+# predictions =[]
+# with torch.no_grad():
+#     for batch_id, (token_ids, valid_length, segment_ids, label) in enumerate(tqdm(test_dataloader)):
+#         token_ids = token_ids.long().cuda()
+#         segment_ids = segment_ids.long().cuda()
+#         valid_length = valid_length
+#         print(token_ids, segment_ids)
+#         label = label.long().cuda()
+#         out = model(token_ids, valid_length, segment_ids)
+#         _, max_indices = torch.max(out, 1)
+#
+#         predictions.extend(max_indices.squeeze(0).detach().cpu().numpy())
+#
+#
+# print(predictions)
+#
+# test['label'] = predictions
+#
+# test[['class', 'label']]
+#
+# num = 0
+# for i in range(len(test)):
+#     if test.iloc[i]['class'] == test.iloc[i]['label']:
+#         num += 1
+#
