@@ -11,7 +11,7 @@ OCR text 결과를 BertClassifier의 input으로 활용해 문서 분류를 진�
 Bertclassifier를 이용하여 분류 모델을 학습합니다:
 
 ``` bash
-$ python custom_net/nlp.py
+$ python custom_net/BertClassifier.py
 ```
 Note 1: `train.csv, val.csv, test.csv`을 아래와 같은 형태로 만들어 `BertClassifier.py`에 파싱해줍니다.  
 Note 2: Classifier 모델을 저장하여 활용합니다.
