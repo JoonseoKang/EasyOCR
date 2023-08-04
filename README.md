@@ -13,8 +13,8 @@ Bertclassifier를 이용하여 분류 모델을 학습합니다:
 ``` bash
 $ python custom_net/nlp.py
 ```
-Note 1: `train.csv, val.csv, test.csv`을 아래와 같은 형태로 만들어 `nlp.py`에 지정해줍니다.  
-Note 2: NLP모델이 `model.pt` 로 저장 됩니다.
+Note 1: `train.csv, val.csv, test.csv`을 아래와 같은 형태로 만들어 `BertClassifier.py`에 파싱해줍니다.  
+Note 2: Classifier 모델을 저장하여 활용합니다.
 
 
 
@@ -24,7 +24,7 @@ text	 | class
 ## Usage
 
 ``` python
-$ python custome_net/ocr_cls.py
+$ python custome_net/ocr_with_classifier.py
 ```
 Image, text 2가지 Output이 나오게 됩니다. 
 
